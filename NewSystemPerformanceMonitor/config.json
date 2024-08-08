@@ -1,0 +1,7 @@
+{
+  "FontSize": 16,
+  "ShowCpu": true,
+  "ShowGpu": false,
+  "ShowRam": true,
+  "ToggleHotkey": "F10"
+}
