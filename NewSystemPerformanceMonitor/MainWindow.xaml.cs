@@ -103,7 +103,7 @@ namespace PerformanceMonitorApp
             try
             {
                 // Retrieve performance metrics
-                var cpuUsage = monitor.GetCpuUsage();
+                var (cpuCoreMax, cpuTotal) = monitor.GetCpuUsage(); // Get CPU Core Max and Total usage
                 var ramUsage = monitor.GetRamUsage();
                 var gpuUsage = monitor.GetGpuUsage();
                 var cpuTemp = monitor.GetCpuTemperature();
@@ -117,16 +117,12 @@ namespace PerformanceMonitorApp
                 // Update the text block with metrics and resolution
                 PerformanceTextBlock.Inlines.Clear();
                 AddFormattedText("CPU: ", true);
-                AddFormattedText($"{cpuUsage}%", false);
-                AddFormattedText(" | ", false);
-                AddFormattedText($"{cpuTemp}°C   ", false);
+                AddFormattedText($"{cpuCoreMax}% max | {cpuTotal}% avg | {cpuTemp}°C   ", false);
                 AddFormattedText("GPU: ", true);
-                AddFormattedText($"{gpuUsage}%", false);
-                AddFormattedText(" | ", false);
-                AddFormattedText($"{gpuTemp}°C   ", false);
+                AddFormattedText($"{gpuUsage}% | {gpuTemp}°C   ", false);
                 AddFormattedText("RAM: ", true);
-                AddFormattedText($"{ramUsage}%", false);
-                AddFormattedText("   ", false);
+                AddFormattedText($"{ramUsage}%   ", false);
+                AddFormattedText("RES: ", true);
                 AddFormattedText(resolution, false); // Add resolution to the end
             }
             catch (Exception ex)

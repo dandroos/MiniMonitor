@@ -30,28 +30,24 @@ public class PerformanceMonitor
     }
 
     // Method to get the CPU usage percentage
-    public int GetCpuUsage()
+    public (int CoreMax, int Total) GetCpuUsage()
     {
         try
         {
             var cpu = _computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Cpu);
-            if (cpu == null) return 0; // Return 0 if no CPU component found
+            if (cpu == null) return (0, 0); // Return 0 if no CPU component found
 
             cpu.Update(); // Update the CPU data
 
-            var idleSensor = cpu.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Load && s.Name.Contains("Idle"));
-            if (idleSensor != null)
-            {
-                return RoundValue(100f - (idleSensor.Value ?? 0));
-            }
+            var coreMax = cpu.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Load && s.Name.Contains("Core Max"));
+            var totalLoad = cpu.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Load && s.Name.Contains("Total"));
 
-            var cpuLoad = cpu.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Load && s.Name.Contains("Max"));
-            return RoundValue(cpuLoad?.Value ?? 0);
+            return (RoundValue(coreMax?.Value ?? 0), RoundValue(totalLoad?.Value ?? 0));
         }
         catch (Exception ex)
         {
             LogError("Failed to get CPU usage.", ex);
-            return 0;
+            return (0, 0);
         }
     }
 
