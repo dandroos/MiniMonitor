@@ -45,7 +45,8 @@ public class PerformanceMonitor
                 return RoundValue(100f - (idleSensor.Value ?? 0));
             }
 
-            var cpuLoad = cpu.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Load && s.Name.Contains("Total"));
+            var cpuLoad = cpu.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Load && s.Name.Contains("Max"));
+            Console.WriteLine(cpuLoad.Name);
             return RoundValue(cpuLoad?.Value ?? 0);
         }
         catch (Exception ex)
