@@ -46,7 +46,6 @@ public class PerformanceMonitor
             }
 
             var cpuLoad = cpu.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Load && s.Name.Contains("Max"));
-            Console.WriteLine(cpuLoad.Name);
             return RoundValue(cpuLoad?.Value ?? 0);
         }
         catch (Exception ex)
