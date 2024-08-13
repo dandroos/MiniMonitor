@@ -25,21 +25,21 @@ namespace PerformanceMonitorApp
             ConfigureWindow(); // Configure window settings
             InitializeTrayIcon(); // Initialize system tray icon
             StartMonitoring(); // Start updating performance data
+            Loaded += (sender, e) => MakeClickThrough(); // Ensure window is click-through after loading
         }
 
-        // Configures window settings, including hotkeys
+        // Configures window settings and registers hotkeys
         private void ConfigureWindow()
         {
             try
             {
                 // Register a hotkey (F10) to toggle window visibility
-                int toggleVisibilityHotkeyId = hotkeyManager.RegisterHotkey(KeyInterop.VirtualKeyFromKey(Key.F10), KeyModifier.None, ToggleVisibility);
+                hotkeyManager.RegisterHotkey(KeyInterop.VirtualKeyFromKey(Key.F10), KeyModifier.None, ToggleVisibility);
                 this.Topmost = true; // Ensure window stays on top
-                MakeClickThrough(); // Make window click-through
             }
             catch (Exception ex)
             {
-                // Log errors and show an error message if configuration fails
+                // Log and show error if configuration fails
                 LogError("Failed to configure the window.", ex);
                 System.Windows.MessageBox.Show("Failed to configure the window. Please check the logs for more details.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 System.Windows.Application.Current.Shutdown(); // Shut down the application
@@ -51,17 +51,18 @@ namespace PerformanceMonitorApp
         {
             notifyIcon = new NotifyIcon
             {
-                Icon = LoadIconFromResource("NewSystemPerformanceMonitor.sysperform.ico"), // Update with your actual namespace and resource path
+                Icon = LoadIconFromResource("NewSystemPerformanceMonitor.sysperform.ico"), // Path to the icon resource
                 Visible = true,
-                Text = "Performance Monitor"
+                Text = "MiniMonitor"
             };
 
             var contextMenu = new ContextMenuStrip();
-            contextMenu.Items.Add("Close Monitor", null, OnCloseMonitorClick);
+            contextMenu.Items.Add("Close MiniMonitor", null, OnCloseMonitorClick);
             notifyIcon.ContextMenuStrip = contextMenu;
-            notifyIcon.DoubleClick += (sender, e) => ToggleVisibility();
+            notifyIcon.DoubleClick += (sender, e) => ToggleVisibility(); // Toggle visibility on double-click
         }
 
+        // Loads an icon from the application resources
         private Icon LoadIconFromResource(string resourceName)
         {
             using (var stream = GetType().Assembly.GetManifestResourceStream(resourceName))
@@ -72,25 +73,24 @@ namespace PerformanceMonitorApp
             }
         }
 
-
-        // Event handler for closing the monitor from the system tray
+        // Closes the application when "Close MiniMonitor" is clicked
         private void OnCloseMonitorClick(object sender, EventArgs e)
         {
             System.Windows.Application.Current.Shutdown(); // Close the application
         }
 
-        // Starts the performance monitoring
+        // Starts the performance monitoring with a timer
         private void StartMonitoring()
         {
             try
             {
-                updateTimer.Interval = TimeSpan.FromSeconds(1); // Set update interval to 1 second
-                updateTimer.Tick += UpdatePerformanceData; // Attach event handler for timer ticks
+                updateTimer.Interval = TimeSpan.FromSeconds(1); // Update every second
+                updateTimer.Tick += UpdatePerformanceData; // Handle timer ticks
                 updateTimer.Start(); // Start the timer
             }
             catch (Exception ex)
             {
-                // Log errors and show an error message if monitoring fails
+                // Log and show error if monitoring fails
                 LogError("Failed to start monitoring performance data.", ex);
                 System.Windows.MessageBox.Show("Failed to start monitoring performance data. Please check the logs for more details.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 System.Windows.Application.Current.Shutdown(); // Shut down the application
@@ -102,7 +102,7 @@ namespace PerformanceMonitorApp
         {
             try
             {
-                // Retrieve various performance metrics
+                // Retrieve performance metrics
                 var cpuUsage = monitor.GetCpuUsage();
                 var ramUsage = monitor.GetRamUsage();
                 var gpuUsage = monitor.GetGpuUsage();
@@ -114,7 +114,7 @@ namespace PerformanceMonitorApp
                 var screenHeight = SystemParameters.PrimaryScreenHeight;
                 var resolution = $"{screenWidth}x{screenHeight}";
 
-                // Update the text block with performance metrics and resolution
+                // Update the text block with metrics and resolution
                 PerformanceTextBlock.Inlines.Clear();
                 AddFormattedText("CPU: ", true);
                 AddFormattedText($"{cpuUsage}%", false);
@@ -127,11 +127,11 @@ namespace PerformanceMonitorApp
                 AddFormattedText("RAM: ", true);
                 AddFormattedText($"{ramUsage}%", false);
                 AddFormattedText("   ", false);
-                AddFormattedText(resolution, false); // Add the resolution to the end
+                AddFormattedText(resolution, false); // Add resolution to the end
             }
             catch (Exception ex)
             {
-                // Log errors if updating performance data fails
+                // Log error if updating performance data fails
                 LogError("Failed to update performance data.", ex);
             }
         }
@@ -145,23 +145,23 @@ namespace PerformanceMonitorApp
             }
             catch (Exception ex)
             {
-                // Log errors if toggling visibility fails
+                // Log error if toggling visibility fails
                 LogError("Failed to toggle window visibility.", ex);
             }
         }
 
-        // Makes the window click-through by setting its extended window style
+        // Makes the window click-through by modifying extended window styles
         private void MakeClickThrough()
         {
             try
             {
                 var hwnd = new WindowInteropHelper(this).Handle; // Get the window handle
-                int style = GetWindowLong(hwnd, GWL_EXSTYLE); // Get current window style
-                SetWindowLong(hwnd, GWL_EXSTYLE, style | WS_EX_TRANSPARENT); // Set window to be click-through
+                int style = GetWindowLong(hwnd, GWL_EXSTYLE); // Get current extended style
+                SetWindowLong(hwnd, GWL_EXSTYLE, style | WS_EX_TRANSPARENT); // Apply click-through style
             }
             catch (Exception ex)
             {
-                // Log errors if making the window click-through fails
+                // Log error if making the window click-through fails
                 LogError("Failed to make the window click-through.", ex);
             }
         }
