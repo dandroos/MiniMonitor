@@ -72,7 +72,12 @@ namespace PerformanceMonitorApp
                 var cpuTemp = monitor.GetCpuTemperature();
                 var gpuTemp = monitor.GetGpuTemperature();
 
-                // Update the text block with performance metrics
+                // Retrieve current screen resolution
+                var screenWidth = SystemParameters.PrimaryScreenWidth;
+                var screenHeight = SystemParameters.PrimaryScreenHeight;
+                var resolution = $"{screenWidth}x{screenHeight}";
+
+                // Update the text block with performance metrics and resolution
                 PerformanceTextBlock.Inlines.Clear();
                 AddFormattedText("CPU: ", true);
                 AddFormattedText($"{cpuUsage}%", false);
@@ -84,6 +89,8 @@ namespace PerformanceMonitorApp
                 AddFormattedText($"{gpuTemp}°C   ", false);
                 AddFormattedText("RAM: ", true);
                 AddFormattedText($"{ramUsage}%", false);
+                AddFormattedText("   ", false);
+                AddFormattedText(resolution, false); // Add the resolution to the end
             }
             catch (Exception ex)
             {
@@ -91,6 +98,7 @@ namespace PerformanceMonitorApp
                 LogError("Failed to update performance data.", ex);
             }
         }
+
 
         // Toggles the visibility of the window
         private void ToggleVisibility()

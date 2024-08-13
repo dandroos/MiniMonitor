@@ -34,19 +34,22 @@ public class PerformanceMonitor
     {
         try
         {
-            // Find the first CPU hardware component
             var cpu = _computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Cpu);
             if (cpu == null) return 0; // Return 0 if no CPU component found
 
             cpu.Update(); // Update the CPU data
-            // Find the first sensor of type Load within the CPU component
-            var cpuLoad = cpu.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Load);
-            // Return the rounded value of the CPU load, or 0 if no load sensor found
+
+            var idleSensor = cpu.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Load && s.Name.Contains("Idle"));
+            if (idleSensor != null)
+            {
+                return RoundValue(100f - (idleSensor.Value ?? 0));
+            }
+
+            var cpuLoad = cpu.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Load && s.Name.Contains("Total"));
             return RoundValue(cpuLoad?.Value ?? 0);
         }
         catch (Exception ex)
         {
-            // Log errors and return 0 if getting CPU usage fails
             LogError("Failed to get CPU usage.", ex);
             return 0;
         }
@@ -57,19 +60,16 @@ public class PerformanceMonitor
     {
         try
         {
-            // Find the first Memory hardware component
             var memory = _computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Memory);
             if (memory == null) return 0; // Return 0 if no Memory component found
 
             memory.Update(); // Update the Memory data
-            // Find the first sensor of type Load within the Memory component
+
             var memoryLoad = memory.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Load);
-            // Return the rounded value of the Memory load, or 0 if no load sensor found
             return RoundValue(memoryLoad?.Value ?? 0);
         }
         catch (Exception ex)
         {
-            // Log errors and return 0 if getting RAM usage fails
             LogError("Failed to get RAM usage.", ex);
             return 0;
         }
@@ -80,29 +80,29 @@ public class PerformanceMonitor
     {
         try
         {
-            // Array of possible GPU hardware types
             var gpuTypes = new[] { HardwareType.GpuNvidia, HardwareType.GpuAmd, HardwareType.GpuIntel };
+
             foreach (var gpuType in gpuTypes)
             {
-                // Find the first hardware component of the current GPU type
                 var gpu = _computer.Hardware.FirstOrDefault(h => h.HardwareType == gpuType);
                 if (gpu != null)
                 {
-                    gpu.Update(); // Update the GPU data
-                    // Find the first sensor of type Load within the GPU component
-                    var gpuLoad = gpu.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Load);
-                    if (gpuLoad != null)
+                    gpu.Update();
+
+                    // Look for the "GPU Core" or equivalent sensor representing overall GPU load
+                    var gpuLoad = gpu.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Load && s.Name.Contains("Core") || s.Name.Contains("Total"));
+
+                    if (gpuLoad != null && gpuLoad.Value.HasValue)
                     {
-                        // Return the rounded value of the GPU load
-                        return RoundValue(gpuLoad.Value ?? 0);
+                        return RoundValue(gpuLoad.Value.Value);
                     }
                 }
             }
-            return 0; // Return 0 if no GPU load sensor found
+
+            return 0; // Return 0 if no suitable GPU load sensor found
         }
         catch (Exception ex)
         {
-            // Log errors and return 0 if getting GPU usage fails
             LogError("Failed to get GPU usage.", ex);
             return 0;
         }
@@ -113,19 +113,21 @@ public class PerformanceMonitor
     {
         try
         {
-            // Find the first CPU hardware component
             var cpu = _computer.Hardware.FirstOrDefault(h => h.HardwareType == HardwareType.Cpu);
             if (cpu == null) return 0; // Return 0 if no CPU component found
 
             cpu.Update(); // Update the CPU data
-            // Find the first sensor of type Temperature within the CPU component
-            var cpuTemp = cpu.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Temperature);
-            // Return the rounded value of the CPU temperature, or 0 if no temperature sensor found
+
+            var cpuTemp = cpu.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Temperature && (s.Name.Contains("Tctl") || s.Name.Contains("Tdie")));
+            if (cpuTemp == null)
+            {
+                cpuTemp = cpu.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Temperature);
+            }
+
             return RoundValue(cpuTemp?.Value ?? 0);
         }
         catch (Exception ex)
         {
-            // Log errors and return 0 if getting CPU temperature fails
             LogError("Failed to get CPU temperature.", ex);
             return 0;
         }
@@ -136,20 +138,17 @@ public class PerformanceMonitor
     {
         try
         {
-            // Array of possible GPU hardware types
             var gpuTypes = new[] { HardwareType.GpuNvidia, HardwareType.GpuAmd, HardwareType.GpuIntel };
             foreach (var gpuType in gpuTypes)
             {
-                // Find the first hardware component of the current GPU type
                 var gpu = _computer.Hardware.FirstOrDefault(h => h.HardwareType == gpuType);
                 if (gpu != null)
                 {
-                    gpu.Update(); // Update the GPU data
-                    // Find the first sensor of type Temperature within the GPU component
+                    gpu.Update();
+
                     var gpuTemp = gpu.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Temperature);
                     if (gpuTemp != null)
                     {
-                        // Return the rounded value of the GPU temperature
                         return RoundValue(gpuTemp.Value ?? 0);
                     }
                 }
@@ -158,7 +157,6 @@ public class PerformanceMonitor
         }
         catch (Exception ex)
         {
-            // Log errors and return 0 if getting GPU temperature fails
             LogError("Failed to get GPU temperature.", ex);
             return 0;
         }
