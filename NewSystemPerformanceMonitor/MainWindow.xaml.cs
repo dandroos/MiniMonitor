@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Windows;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Threading;
+using System.Windows.Forms; // For NotifyIcon and ContextMenuStrip
+using System.Windows.Forms.Integration; // For WindowsFormsHost
+using System.Drawing; // For Icon
 
 namespace PerformanceMonitorApp
 {
@@ -13,6 +15,7 @@ namespace PerformanceMonitorApp
         private readonly HotkeyManager hotkeyManager; // Manages global hotkeys
         private readonly DispatcherTimer updateTimer = new DispatcherTimer(); // Timer for updating performance data
         private readonly PerformanceMonitor monitor = new PerformanceMonitor(); // Monitors system performance
+        private NotifyIcon notifyIcon; // System tray icon
 
         // Constructor to initialize the window
         public PerformanceMonitorWindow()
@@ -20,6 +23,7 @@ namespace PerformanceMonitorApp
             InitializeComponent(); // Initialize XAML components
             hotkeyManager = new HotkeyManager(this); // Create HotkeyManager instance
             ConfigureWindow(); // Configure window settings
+            InitializeTrayIcon(); // Initialize system tray icon
             StartMonitoring(); // Start updating performance data
         }
 
@@ -37,9 +41,42 @@ namespace PerformanceMonitorApp
             {
                 // Log errors and show an error message if configuration fails
                 LogError("Failed to configure the window.", ex);
-                MessageBox.Show("Failed to configure the window. Please check the logs for more details.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                Application.Current.Shutdown(); // Shut down the application
+                System.Windows.MessageBox.Show("Failed to configure the window. Please check the logs for more details.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.Application.Current.Shutdown(); // Shut down the application
             }
+        }
+
+        // Initializes the system tray icon
+        private void InitializeTrayIcon()
+        {
+            notifyIcon = new NotifyIcon
+            {
+                Icon = LoadIconFromResource("NewSystemPerformanceMonitor.sysperform.ico"), // Update with your actual namespace and resource path
+                Visible = true,
+                Text = "Performance Monitor"
+            };
+
+            var contextMenu = new ContextMenuStrip();
+            contextMenu.Items.Add("Close Monitor", null, OnCloseMonitorClick);
+            notifyIcon.ContextMenuStrip = contextMenu;
+            notifyIcon.DoubleClick += (sender, e) => ToggleVisibility();
+        }
+
+        private Icon LoadIconFromResource(string resourceName)
+        {
+            using (var stream = GetType().Assembly.GetManifestResourceStream(resourceName))
+            {
+                if (stream == null)
+                    throw new InvalidOperationException($"Resource '{resourceName}' not found.");
+                return new Icon(stream);
+            }
+        }
+
+
+        // Event handler for closing the monitor from the system tray
+        private void OnCloseMonitorClick(object sender, EventArgs e)
+        {
+            System.Windows.Application.Current.Shutdown(); // Close the application
         }
 
         // Starts the performance monitoring
@@ -55,8 +92,8 @@ namespace PerformanceMonitorApp
             {
                 // Log errors and show an error message if monitoring fails
                 LogError("Failed to start monitoring performance data.", ex);
-                MessageBox.Show("Failed to start monitoring performance data. Please check the logs for more details.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                Application.Current.Shutdown(); // Shut down the application
+                System.Windows.MessageBox.Show("Failed to start monitoring performance data. Please check the logs for more details.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.Application.Current.Shutdown(); // Shut down the application
             }
         }
 
@@ -99,7 +136,6 @@ namespace PerformanceMonitorApp
             }
         }
 
-
         // Toggles the visibility of the window
         private void ToggleVisibility()
         {
@@ -133,7 +169,7 @@ namespace PerformanceMonitorApp
         // Adds formatted text to the performance text block
         private void AddFormattedText(string text, bool isBold)
         {
-            var run = new Run(text) { FontWeight = isBold ? FontWeights.Bold : FontWeights.Normal };
+            var run = new System.Windows.Documents.Run(text) { FontWeight = isBold ? FontWeights.Bold : FontWeights.Normal };
             PerformanceTextBlock.Inlines.Add(run);
         }
 
